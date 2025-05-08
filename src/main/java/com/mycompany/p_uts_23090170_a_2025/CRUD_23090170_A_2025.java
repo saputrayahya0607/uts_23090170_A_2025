@@ -1,85 +1,126 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- */
-
 package com.mycompany.p_uts_23090170_a_2025;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.*;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Updates;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-/**
- *
- * @author Lenovo
- */
+import java.util.Scanner;
+
 public class CRUD_23090170_A_2025 {
 
     public static void main(String[] args) {
-        // Koneksi ke MongoDB (pastikan MongoDB aktif di localhost:27017)
+        // Alamat koneksi MongoDB lokal
         String uri = "mongodb://localhost:27017";
-        try (MongoClient mongoClient = MongoClients.create(uri)) {
 
-            // Pilih database dan collection
+        try (MongoClient mongoClient = MongoClients.create(uri)) {
+            // Koneksi ke database
             MongoDatabase database = mongoClient.getDatabase("uts_23090170_A2025");
             MongoCollection<Document> collection = database.getCollection("coll_23090170_A_2025");
 
-            // CREATE: Insert data
-            Document mahasiswa = new Document("name", "Yahya")
-                    .append("prodi", "Informatika")
-                    .append("email", "yahya001@gmail.com")
-                    .append("age", 17);
-            collection.insertOne(mahasiswa);
-            System.out.println("Data Inserted");
+            Scanner scanner = new Scanner(System.in);
+            int choice;
 
-            // READ: Menampilkan semua data
-            System.out.println("\n=== All Mahasiswa ===");
-            FindIterable<Document> allData = collection.find();
-            for (Document d : allData) {
-                System.out.println(d.toJson());
-            }
+            // Menu utama
+            do {
+                System.out.println("\n=== MENU CRUD MONGODB ===");
+                System.out.println("1. Create (Tambah Data)");
+                System.out.println("2. Read (Tampilkan Semua Data)");
+                System.out.println("3. Update (Ubah Semua Data)");
+                System.out.println("4. Delete (Hapus Data)");
+                System.out.println("5. Search (Cari Berdasarkan Nama)");
+                System.out.println("0. Exit");
+                System.out.print("Pilihan Anda: ");
+                choice = scanner.nextInt();
+                scanner.nextLine(); // buang newline agar input tidak terlewat
 
-            // UPDATE: Update email berdasarkan nama
-            Bson filterUpdate = Filters.eq("name", "Yahya");
-            Bson updateData = Updates.set("email", "yahya007@gmail.com");
-            collection.updateOne(filterUpdate, updateData);
-            System.out.println("\n=== Data Updated ===");
+                switch (choice) {
+                    case 1 -> {
+                        // CREATE
+                        System.out.print("Nama: ");
+                        String name = scanner.nextLine();
+                        System.out.print("Prodi: ");
+                        String prodi = scanner.nextLine();
+                        System.out.print("Email: ");
+                        String email = scanner.nextLine();
+                        System.out.print("Umur: ");
+                        int age = scanner.nextInt();
 
-            // READ setelah update
-            System.out.println("\n=== Data After Update ===");
-            Document updatedDoc = collection.find(Filters.eq("name", "Yahya")).first();
-            if (updatedDoc != null) {
-                System.out.println(updatedDoc.toJson());
-            } else {
-                System.out.println("Data not found.");
-            }
+                        Document mahasiswa = new Document("name", name)
+                                .append("prodi", prodi)
+                                .append("email", email)
+                                .append("age", age);
+                        collection.insertOne(mahasiswa);
+                        System.out.println("✅ Data berhasil ditambahkan!");
+                    }
 
-            // SEARCHING: Cari berdasarkan prodi
-            System.out.println("\n=== Search by Prodi: Informatika ===");
-            Bson searchFilter = Filters.eq("prodi", "Informatika");
-            FindIterable<Document> searchResult = collection.find(searchFilter);
-            for (Document d : searchResult) {
-                System.out.println(d.toJson());
-            }
+                    case 2 -> {
+                        // READ
+                        System.out.println("=== Data Mahasiswa ===");
+                        FindIterable<Document> allData = collection.find();
+                        for (Document d : allData) {
+                            System.out.println(d.toJson());
+                        }
+                    }
 
-            // DELETE: Hapus data berdasarkan nama
-            Bson deleteFilter = Filters.eq("name", "yahya");
-            collection.deleteOne(deleteFilter);
-            System.out.println("\n=== Data Deleted ===");
+                    case 3 -> {
+                        // UPDATE
+                        System.out.print("Masukkan nama yang ingin diupdate: ");
+                        String oldName = scanner.nextLine();
 
-            // READ setelah delete
-            System.out.println("\n=== Data After Delete ===");
-            FindIterable<Document> finalResult = collection.find();
-            for (Document d : finalResult) {
-                System.out.println(d.toJson());
-            }
+                        System.out.print("Nama Baru: ");
+                        String newName = scanner.nextLine();
+                        System.out.print("Prodi Baru: ");
+                        String newProdi = scanner.nextLine();
+                        System.out.print("Email Baru: ");
+                        String newEmail = scanner.nextLine();
+                        System.out.print("Umur Baru: ");
+                        int newAge = scanner.nextInt();
+                        scanner.nextLine();
+
+                        Bson filter = Filters.eq("name", oldName);
+                        Bson updates = Updates.combine(
+                                Updates.set("name", newName),
+                                Updates.set("prodi", newProdi),
+                                Updates.set("email", newEmail),
+                                Updates.set("age", newAge)
+                        );
+
+                        collection.updateOne(filter, updates);
+                        System.out.println("✅ Data berhasil diupdate!");
+                    }
+
+                    case 4 -> {
+                        // DELETE
+                        System.out.print("Masukkan nama yang ingin dihapus: ");
+                        String name = scanner.nextLine();
+                        Bson filter = Filters.eq("name", name);
+                        collection.deleteOne(filter);
+                        System.out.println("🗑️ Data berhasil dihapus!");
+                    }
+
+                    case 5 -> {
+                        // SEARCH berdasarkan nama
+                        System.out.print("Masukkan nama yang ingin dicari: ");
+                        String searchName = scanner.nextLine();
+                        Bson searchFilter = Filters.eq("name", searchName);
+                        FindIterable<Document> result = collection.find(searchFilter);
+
+                        System.out.println("=== Hasil Pencarian ===");
+                        for (Document d : result) {
+                            System.out.println(d.toJson());
+                        }
+                    }
+
+                    case 0 -> System.out.println("🚪 Keluar dari program. Terima kasih.");
+                    default -> System.out.println("❌ Pilihan tidak valid. Silakan ulangi.");
+                }
+
+            } while (choice != 0);
 
         } catch (Exception e) {
+            System.out.println("❗ Terjadi kesalahan: " + e.getMessage());
         }
-    }   
+    }
 }
